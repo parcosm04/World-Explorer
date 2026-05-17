@@ -6,7 +6,8 @@ require('dotenv').config();
 
 const app = express();
 app.use(cors());
-app.use(express.static(__dirname));
+const path = require('path');
+app.use(express.static(path.join(__dirname, '..')));
 
 // =========================================================
 // IMAGE PROXY: streams Wikipedia images to avoid hotlink blocks
@@ -31,7 +32,7 @@ app.get('/proxy/image', async (req, res) => {
 });
 
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
 
 // Robust Cache Structure:
@@ -329,6 +330,9 @@ app.get('/api/country/:country', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`World Explorer Backend running on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`World Explorer Backend running on http://localhost:${PORT}`);
+    });
+}
+module.exports = app;
