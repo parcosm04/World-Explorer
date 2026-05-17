@@ -6,7 +6,8 @@ require('dotenv').config();
 
 const app = express();
 app.use(cors());
-app.use(express.static(__dirname));
+const path = require('path');
+app.use(express.static(path.join(__dirname, '..')));
 
 // =========================================================
 // IMAGE PROXY: streams Wikipedia images to avoid hotlink blocks
