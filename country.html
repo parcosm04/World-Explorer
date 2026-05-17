@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title id="page-title">World Explorer | Deep Dive</title>
+    <link rel="icon" href="data:,">
+    <!-- Global Theme Script -->
+    <script src="js/theme.js"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet" />
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1B4332",
+                        "accent-blue": "#D4A373", // Legacy map name, kept for safety
+                        "aurora-glow": "#2D6A4F",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#121212",
+                        "emerald-bright": "#40916c",
+                        "moss-green": "#52796f",
+                        "sand-gold": "#D4A373"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "heading": ["Space Grotesk", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: { "DEFAULT": "1rem", "lg": "1.5rem", "xl": "2rem", "full": "9999px" },
+                    boxShadow: {
+                        'glow': '0 0 20px rgba(64, 145, 108, 0.3)',
+                        'glow-lg': '0 0 40px rgba(64, 145, 108, 0.5)',
+                        'floating': '0 20px 40px -15px rgba(0, 0, 0, 0.5)'
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        .dark .glass-panel {
+            background: rgba(27, 67, 50, 0.35);
+            /* Emerald dark mode */
+            border: 1px solid rgba(64, 145, 108, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dark .glass-card {
+            background: rgba(18, 18, 18, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 15px rgba(212, 163, 115, 0.6);
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Continuous scroll animation for Cuisine */
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(calc(-250px * 6 - 1.5rem * 6));
+            }
+
+            /* Adjust based on card width */
+        }
+
+        .animate-scroll {
+            animation: scroll 30s linear infinite;
+        }
+
+        .animate-scroll:hover {
+            animation-play-state: paused;
+        }
+
+        /* Masonry Grid */
+        .masonry {
+            column-count: 1;
+            column-gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .masonry {
+                column-count: 2;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .masonry {
+                column-count: 3;
+            }
+        }
+
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 1.5rem;
+        }
+
+        .parallax-bg {
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        /* Stats gauge circle */
+        circle {
+            transition: stroke-dashoffset 1.5s ease-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-emerald-bright selection:text-white pb-20">
+
+    <!-- Header Nav -->
+    <header
+        class="fixed top-0 w-full z-50 glass-panel px-6 py-4 flex items-center justify-between transition-all duration-300">
+        <div class="flex items-center gap-4">
+            <a href="index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity group">
+                <span
+                    class="material-symbols-outlined text-emerald-bright dark:text-sand-gold text-3xl group-hover:rotate-90 transition-transform duration-500">explore</span>
+                <h1 class="font-heading text-xl font-bold tracking-tight hidden sm:block">World Explorer</h1>
+            </a>
+        </div>
+        <div class="flex items-center gap-3 md:gap-4">
+            <button onclick="window.toggleTheme()"
+                class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                <span
+                    class="material-symbols-outlined theme-toggle-icon text-emerald-bright dark:text-sand-gold text-2xl">light_mode</span>
+            </button>
+            <a href="index.html"
+                class="px-4 py-2 text-sm font-medium bg-emerald-bright text-white rounded-full hover:bg-emerald-600 transition-colors shadow-glow flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">map</span>
+                Map
+            </a>
+        </div>
+    </header>
+
+    <!-- Global Loading Overlay -->
+    <div id="loading-overlay"
+        class="fixed inset-0 z-[60] bg-background-light dark:bg-background-dark flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="w-16 h-16 border-4 border-emerald-bright/20 border-t-emerald-bright rounded-full animate-spin mb-4">
+        </div>
+        <p class="font-mono text-sand-gold tracking-widest text-sm uppercase">Mapping Coordinates...</p>
+    </div>
+
+    <!-- 1. Hero Section -->
+    <section class="relative h-[80vh] min-h-[600px] w-full flex items-end justify-center overflow-hidden">
+            <div id="hero-bg" class="absolute inset-0 parallax-bg bg-black/50 transition-all duration-1000 scale-105"></div>
+            <!-- Dynamic Gradient Mesh backfall layer -->
+            <div class="absolute inset-0 bg-gradient-to-tr from-black via-zinc-900 to-black opacity-80 mix-blend-multiply"></div>
+        <div
+            class="absolute inset-0 bg-gradient-to-t from-background-light dark:from-background-dark via-background-dark/40 to-black/30">
+        </div>
+
+        <div class="relative z-10 container mx-auto px-6 pb-20 w-full max-w-7xl flex flex-col items-center text-center">
+            <div id="hero-flag"
+                class="w-20 h-14 md:w-32 md:h-20 rounded-lg shadow-floating overflow-hidden mb-8 border border-white/20">
+                <img src="" alt="Flag" class="w-full h-full object-cover">
+            </div>
+
+            <span id="hero-region"
+                class="px-4 py-1.5 rounded-full glass-card text-xs font-mono font-bold tracking-widest uppercase mb-4 text-emerald-bright dark:text-sand-gold border border-white/10">Region</span>
+
+            <h1 id="hero-title"
+                class="text-5xl md:text-8xl font-heading font-bold text-white mb-6 drop-shadow-xl select-all">Country
+                Name</h1>
+
+            <div class="flex flex-wrap items-center justify-center gap-4 text-white/90 font-mono text-sm md:text-base">
+                <div class="flex items-center gap-2"><span
+                        class="material-symbols-outlined text-sand-gold">location_city</span> <span
+                        id="hero-capital">Capital</span></div>
+                <div class="hidden md:block w-1.5 h-1.5 rounded-full bg-emerald-bright"></div>
+                <div class="flex items-center gap-2"><span
+                        class="material-symbols-outlined text-sand-gold">groups</span> <span
+                        id="hero-pop">Population</span></div>
+            </div>
+
+            <p id="hero-description"
+                class="mt-8 max-w-3xl text-sm md:text-base text-white/80 leading-relaxed font-display text-center drop-shadow-md hidden">
+            </p>
+        </div>
+    </section>
+
+    <!-- Main Content Flow -->
+    <main class="container mx-auto px-4 sm:px-6 py-12 max-w-7xl space-y-32">
+
+        <!-- 2. Overview Stats Section -->
+        <section class="relative -mt-32 z-20">
+            <div class="glass-panel rounded-3xl p-6 md:p-10 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6 md:gap-10 shadow-floating">
+                <!-- Stat 1 -->
+                <div class="flex flex-col gap-2 relative">
+                    <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1">
+                        <span class="material-symbols-outlined text-lg">public</span>
+                        <span class="font-mono text-xs uppercase tracking-wider">Area</span>
+                    </div>
+                    <div
+                        class="text-2xl md:text-4xl font-bold font-heading text-emerald-bright flex items-baseline gap-1">
+                        <span class="counter" id="stat-area">0</span>
+                        <span class="text-sm font-normal text-slate-400">km²</span>
+                    </div>
+                </div>
+                <!-- Stat 2 -->
+                <div class="flex flex-col gap-2 relative">
+                    <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1">
+                        <span class="material-symbols-outlined text-lg">payments</span>
+                        <span class="font-mono text-xs uppercase tracking-wider">Currency</span>
+                    </div>
+                    <div class="text-xl md:text-2xl font-bold font-heading dark:text-white" id="stat-currency">N/A</div>
+                </div>
+                <!-- Stat 3 -->
+                <div class="flex flex-col gap-2 relative">
+                    <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1">
+                        <span class="material-symbols-outlined text-lg">translate</span>
+                        <span class="font-mono text-xs uppercase tracking-wider">Languages</span>
+                    </div>
+                    <div class="text-lg md:text-xl font-bold font-display dark:text-white truncate" id="stat-languages">
+                        N/A</div>
+                </div>
+                <!-- Stat 4 -->
+                <div class="flex flex-col gap-2 relative">
+                    <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1">
+                        <span class="material-symbols-outlined text-lg">map</span>
+                        <span class="font-mono text-xs uppercase tracking-wider">Borders</span>
+                    </div>
+                    <div class="text-lg md:text-xl font-bold font-display dark:text-white" id="stat-borders">0</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Economy Dashboard -->
+        <section class="space-y-10">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-heading font-bold mb-2">Economic Pulse</h2>
+                    <p class="text-slate-500 dark:text-slate-400 font-mono text-sm uppercase tracking-wide">Macro
+                        Indicators</p>
+                </div>
+                <span class="material-symbols-outlined text-5xl text-emerald-bright/20">monitoring</span>
+            </div>
+
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-6">
+                <!-- GDP Absolute -->
+                <div
+                    class="glass-card rounded-2xl p-6 flex flex-col justify-between group hover:shadow-glow transition-shadow">
+                    <div class="flex justify-between items-start mb-6">
+                        <span class="material-symbols-outlined text-sand-gold text-2xl">account_balance</span>
+                        <span
+                            class="text-[10px] font-mono bg-emerald-bright/10 text-emerald-bright px-2 py-1 rounded-full border border-emerald-bright/20">Total</span>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs mb-1">Gross Domestic Product</p>
+                        <div class="text-3xl font-bold font-heading dark:text-white flex items-baseline gap-1 truncate"
+                            id="eco-gdp-abs" title="Absolute GDP">
+                            N/A
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GDP Growth -->
+                <div
+                    class="glass-card rounded-2xl p-6 flex flex-col justify-between group hover:shadow-glow transition-shadow">
+                    <div class="flex justify-between items-start mb-6">
+                        <span class="material-symbols-outlined text-sand-gold text-2xl">trending_up</span>
+                        <span
+                            class="text-[10px] font-mono bg-emerald-bright/10 text-emerald-bright px-2 py-1 rounded-full border border-emerald-bright/20">Annual</span>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs mb-1">GDP Growth Rate</p>
+                        <div class="text-4xl font-bold font-heading dark:text-white flex items-baseline gap-1">
+                            <span id="eco-gdp">N/A</span><span class="text-xl text-emerald-bright">%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pop Growth -->
+                <div
+                    class="glass-card rounded-2xl p-6 flex flex-col justify-between group hover:shadow-glow transition-shadow">
+                    <div class="flex justify-between items-start mb-6">
+                        <span class="material-symbols-outlined text-sand-gold text-2xl">group_add</span>
+                        <span
+                            class="text-[10px] font-mono bg-emerald-bright/10 text-emerald-bright px-2 py-1 rounded-full border border-emerald-bright/20">Annual</span>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs mb-1">Population Growth</p>
+                        <div class="text-4xl font-bold font-heading dark:text-white flex items-baseline gap-1">
+                            <span id="eco-pop">N/A</span><span class="text-xl text-emerald-bright">%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Development Index (Gauge) -->
+                <div
+                    class="glass-card rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:shadow-glow transition-shadow">
+                    <div class="relative w-32 h-32 flex items-center justify-center">
+                        <svg class="w-full h-full" viewBox="0 0 100 100">
+                            <!-- Background Circle -->
+                            <circle class="text-slate-200 dark:text-slate-800 stroke-current" stroke-width="6" cx="50"
+                                cy="50" r="42" fill="transparent"></circle>
+                            <!-- Progress Circle -->
+                            <circle id="eco-hdi-circle" class="text-emerald-bright stroke-current" stroke-width="6"
+                                stroke-linecap="round" cx="50" cy="50" r="42" fill="transparent"
+                                stroke-dasharray="263.89" stroke-dashoffset="263.89"></circle>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-2xl font-bold font-heading dark:text-white" id="eco-hdi-val">0.0</span>
+                            <span
+                                class="text-[9px] font-mono text-sand-gold uppercase tracking-widest mt-0.5">Index</span>
+                        </div>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-4 text-center">Development Index (Est.)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Places to Visit Gallery -->
+        <section class="space-y-10">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-heading font-bold mb-2">Destinations</h2>
+                    <p class="text-slate-500 dark:text-slate-400 font-mono text-sm uppercase tracking-wide">Places to
+                        Visit</p>
+                </div>
+            </div>
+
+            <div class="flex gap-6 overflow-x-auto hide-scrollbar pb-8 snap-x" id="places-container">
+                <!-- Javascript will populate -->
+            </div>
+        </section>
+
+        <!-- 5. Famous Cuisine Carousel -->
+        <section class="space-y-10 overflow-hidden relative">
+            <div class="flex items-center justify-between relative z-10">
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-heading font-bold mb-2">Gastronomy</h2>
+                    <p class="text-slate-500 dark:text-slate-400 font-mono text-sm uppercase tracking-wide">Traditional
+                        Cuisine</p>
+                </div>
+            </div>
+
+            <!-- Infinite Scroll Wrapper -->
+            <div class="flex gap-6 w-max animate-scroll hover:[animation-play-state:paused] pt-4 pb-8"
+                id="cuisine-container">
+                <!-- Javascript will populate -->
+            </div>
+
+            <!-- Fade edges -->
+            <div
+                class="absolute top-0 right-0 h-full w-32 bg-gradient-to-l from-background-light dark:from-background-dark to-transparent z-10 pointer-events-none">
+            </div>
+            <div
+                class="absolute top-0 left-0 h-full w-32 bg-gradient-to-r from-background-light dark:from-background-dark to-transparent z-10 pointer-events-none">
+            </div>
+        </section>
+
+        <!-- 6. Botanical Flora Gallery & 7. Wildlife Showcase -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <!-- Flora (Left, Grid) -->
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-3xl font-heading font-bold mb-1">Native Flora</h2>
+                    <p class="text-slate-500 dark:text-slate-400 font-mono text-xs uppercase tracking-wide">Botanical
+                        Identity</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="flora-container">
+                    <!-- Javascript will populate -->
+                </div>
+            </div>
+
+            <!-- Fauna (Right, Large Slider) -->
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-3xl font-heading font-bold mb-1">Wildlife</h2>
+                    <p class="text-slate-500 dark:text-slate-400 font-mono text-xs uppercase tracking-wide">Fauna
+                        Showcase</p>
+                </div>
+                <div class="flex overflow-x-auto gap-6 hide-scrollbar snap-x h-full pb-4" id="fauna-container">
+                    <!-- Javascript will populate -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Culture & Traditions Masonry -->
+        <section class="space-y-10">
+            <div class="flex flex-col items-center text-center max-w-2xl mx-auto mb-12">
+                <span class="material-symbols-outlined text-4xl text-sand-gold mb-4">festival</span>
+                <h2 class="text-3xl md:text-5xl font-heading font-bold mb-4">Culture & Traditions</h2>
+                <p class="text-slate-500 dark:text-slate-400 leading-relaxed">Explore the vibrant heritage, festivals,
+                    and architectural wonders that define the soul of this nation.</p>
+            </div>
+
+            <div class="masonry" id="culture-container">
+                <!-- Javascript will populate -->
+            </div>
+        </section>
+
+        <!-- 9. Eco Indicators Section -->
+        <section class="glass-panel rounded-[2rem] p-8 md:p-12 relative overflow-hidden">
+            <div
+                class="absolute -right-20 -top-20 w-64 h-64 bg-emerald-bright/20 rounded-full blur-[80px] pointer-events-none">
+            </div>
+
+            <div class="mb-10 relative z-10">
+                <h2 class="text-3xl md:text-4xl font-heading font-bold mb-2">Environmental Health</h2>
+                <p class="text-slate-500 dark:text-slate-400 font-mono text-sm uppercase tracking-wide">Live Indicators
+                </p>
+            </div>
+
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-8 relative z-10">
+                <!-- Air Quality -->
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sand-gold text-2xl">air</span>
+                        <h4 class="font-bold text-lg dark:text-white">Air Quality (PM2.5)</h4>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <span class="text-4xl font-heading font-bold text-emerald-bright" id="eco-aqi">0</span>
+                        <span class="text-slate-400 mb-1">µg/m³</span>
+                    </div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div id="eco-aqi-bar" class="h-full bg-emerald-bright transition-all duration-1000"
+                            style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Forest Coverage -->
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sand-gold text-2xl">forest</span>
+                        <h4 class="font-bold text-lg dark:text-white">Forest Coverage</h4>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <span class="text-4xl font-heading font-bold text-emerald-bright" id="eco-forest">0</span>
+                    </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Estimated national land area covered by
+                        forests.</p>
+                </div>
+
+                <!-- Emissions -->
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sand-gold text-2xl">co2</span>
+                        <h4 class="font-bold text-lg dark:text-white">Emissions Level</h4>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <span class="text-4xl font-heading font-bold text-emerald-bright uppercase"
+                            id="eco-carbon">Wait</span>
+                    </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Relative carbon footprint indicator.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 10. Famous Landmarks Grid -->
+        <section class="space-y-10 pb-20">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-heading font-bold mb-2">Cinematic Vistas</h2>
+                    <p class="text-slate-500 dark:text-slate-400 font-mono text-sm uppercase tracking-wide">Iconic
+                        Landscapes</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6" id="landmarks-container">
+                <!-- Javascript will populate -->
+            </div>
+        </section>
+
+    </main>
+
+    <script src="js/tts.js"></script>
+    <script src="js/country.js"></script>
+    <script src="js/api.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>World Explorer | Discover the Unseen</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="icon" href="data:,">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <script src="https://unpkg.com/three@0.136.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/globe.gl@2.27.2/dist/globe.gl.min.js"></script>
+
+    <script src="js/theme.js"></script>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1D1D1F",   /* Apple-style near black */
+                        "secondary": "#424245", /* Dark gray */
+                        "accent": "#000000",    /* Light Mode Accent: Black */
+                        "background-light": "#F5F5F7",
+                        "background-dark": "#000000",
+                        "card-dark": "#1C1C1E",
+                        "surface-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.75rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Modern Glassmorphism System */
+        .glass {
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(24px) saturate(150%);
+            -webkit-backdrop-filter: blur(24px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.04);
+            color: #1d1d1f;
+        }
+
+        .dark .glass {
+            background: rgba(28, 28, 30, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+
+        .glass-panel {
+            background: rgba(245, 245, 247, 0.75);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-left: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .glass-panel {
+            background: rgba(28, 28, 30, 0.65);
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Monochromatic Hero Gradients */
+        .hero-gradient {
+            background: radial-gradient(circle at center, #ffffff 0%, #f5f5f7 100%);
+        }
+
+        .dark .hero-gradient {
+            background: radial-gradient(circle at center, #1c1c1e 0%, #000000 100%);
+        }
+
+        .map-container-bg {
+            background: radial-gradient(circle at center, #f5f5f7 0%, #d2d2d7 100%);
+        }
+
+        .dark .map-container-bg {
+            background: radial-gradient(circle at center, #1c1c1e 0%, #000000 100%);
+        }
+
+        /* Adjusted Particle Grid for Mono */
+        .star-grid {
+            background-image: radial-gradient(circle, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .dark .star-grid {
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        }
+
+        /* Monochromatic Button Glows */
+        .glow-button {
+            background-color: #000000;
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .dark .glow-button {
+            background-color: #ffffff;
+            color: #000000;
+            box-shadow: 0 4px 14px rgba(255, 255, 255, 0.1);
+        }
+
+        .glow-button:hover {
+            transform: translateY(-2px);
+            filter: brightness(0.8);
+        }
+
+        /* Mono Map Highlighting */
+        .country-hover:hover {
+            fill: #86868b;
+            cursor: pointer;
+        }
+
+        .highlighted {
+            fill: #000000;
+        }
+
+        .dark .highlighted {
+            fill: #ffffff;
+        }
+
+        /* Cinematic Loading */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            background: #000000;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-family: monospace;
+            font-size: 1.2rem;
+            transition: opacity 0.5s;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(128, 128, 128, 0.3);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 selection:bg-black/10 dark:selection:bg-white/10 overflow-x-hidden transition-colors duration-300">
+
+    <div class="relative min-h-screen flex flex-col w-full">
+
+        <header class="fixed top-0 left-0 right-0 z-50 flex justify-center p-4 transition-all duration-300"
+            id="main-header">
+            <nav class="glass flex items-center justify-between w-full max-w-6xl px-6 py-3 rounded-full shadow-sm">
+                <div class="flex items-center gap-2 group cursor-pointer"
+                    onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <div class="bg-black dark:bg-white p-1.5 rounded-lg text-white dark:text-black">
+                        <span class="material-symbols-outlined text-xl block">public</span>
+                    </div>
+                    <h2 class="text-slate-900 dark:text-white text-lg font-bold tracking-tight">World Explorer</h2>
+                </div>
+                <div class="hidden md:flex items-center gap-8">
+                    <a class="text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white text-sm font-medium transition-colors"
+                        href="map.html">Destinations</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="window.toggleTheme()"
+                        class="w-10 h-10 rounded-full flex items-center justify-center bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-sm theme-toggle-icon">light_mode</span>
+                    </button>
+                </div>
+            </nav>
+        </header>
+
+        <main class="flex-none flex flex-col">
+            <section class="relative hero-gradient min-h-screen flex items-center justify-center pt-20 px-4">
+                <div class="absolute inset-0 star-grid opacity-30 pointer-events-none"></div>
+                <div class="container max-w-6xl mx-auto flex flex-col items-center text-center relative z-10">
+
+                    <div class="relative w-72 h-72 md:w-96 md:h-96 mb-8 group cursor-grab active:cursor-grabbing">
+                        <div class="absolute inset-0 bg-black/5 dark:bg-white/5 rounded-full blur-[80px]"></div>
+                        <div
+                            class="relative w-full h-full rounded-full border border-black/10 dark:border-white/10 flex items-center justify-center overflow-hidden globe-container">
+                        </div>
+                    </div>
+
+                    <h1 class="text-slate-900 dark:text-white font-bold leading-tight tracking-tight mb-6 max-w-4xl" style="font-size: var(--text-5xl);">
+                        Explore the <span class="text-transparent bg-clip-text bg-gradient-to-r from-black via-slate-500 to-black dark:from-white dark:via-slate-400 dark:to-white">World</span>
+                    </h1>
+                    <p class="text-slate-500 dark:text-slate-400 font-normal leading-relaxed max-w-2xl mb-10" style="font-size: var(--text-xl);">
+                        Discover diverse cultures, unlock historical secrets, and gain deep global insights through our
+                        interactive cinematic platform.
+                    </p>
+                    <div class="flex flex-col sm:flex-row items-center gap-4">
+                        <a href="map.html"
+                            class="glow-button flex min-w-[180px] items-center justify-center gap-2 rounded-full h-14 px-8 text-base font-bold tracking-wide">
+                            Start Exploring
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <section
+                class="bg-background-light dark:bg-background-dark py-24 px-4 border-t border-black/5 dark:border-white/5 transition-colors duration-300">
+                <div class="max-w-6xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 auto-rows-fr">
+                        <!-- Card 1 -->
+                        <div class="glass p-8 lg:p-10 rounded-2xl flex flex-col gap-5 group hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
+                            <div class="w-14 h-14 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-center text-black dark:text-white group-hover:scale-110 transition-transform duration-300 shadow-sm">
+                                <span class="material-symbols-outlined text-2xl">history_edu</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Cultural Depth</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-[var(--text-base)] leading-relaxed">Immerse yourself in centuries of traditions, art, and histories from every corner of the map.</p>
+                        </div>
+                        <!-- Card 2 -->
+                        <div class="glass p-8 lg:p-10 rounded-2xl flex flex-col gap-5 group hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
+                            <div class="w-14 h-14 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-center text-black dark:text-white group-hover:scale-110 transition-transform duration-300 shadow-sm">
+                                <span class="material-symbols-outlined text-2xl">analytics</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Real-time Data</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-[var(--text-base)] leading-relaxed">Access the latest global statistics, demographic trends, and socio-economic shifts instantly.</p>
+                        </div>
+                        <!-- Card 3 -->
+                        <div class="glass p-8 lg:p-10 rounded-2xl flex flex-col gap-5 group hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
+                            <div class="w-14 h-14 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-center text-black dark:text-white group-hover:scale-110 transition-transform duration-300 shadow-sm">
+                                <span class="material-symbols-outlined text-2xl">explore</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Interactive Maps</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-[var(--text-base)] leading-relaxed">Navigate the world with stunning monochromatic visuals and high-resolution spatial storytelling.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/tts.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/map.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>World Explorer | Discover the Unseen</title>
+
+    <!-- Tailwind CSS & Fonts -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="icon" href="data:,">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- No 3D Globe on Map Page -->
+
+    <!-- MapLibre GL JS -->
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+
+    <!-- Global Theme Script (Must be high up to prevent FOUC) -->
+    <script src="js/theme.js"></script>
+    <!-- Tailwind Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2D6A4F",
+                        "secondary": "#40916C",
+                        "accent": "#D4A373",
+                        "background-light": "#f8f9fa",
+                        "background-dark": "#121212",
+                        "card-dark": "#1E1E1E",
+                        "surface-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.75rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(24px) saturate(150%);
+            -webkit-backdrop-filter: blur(24px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+            color: #1e293b;
+        }
+
+        .dark .glass {
+            background: rgba(18, 23, 32, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            color: white;
+        }
+
+        .glass-panel {
+            background: rgba(248, 249, 250, 0.75);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-left: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .glass-panel {
+            background: rgba(6, 14, 29, 0.65);
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-gradient {
+            background: radial-gradient(circle at center, #f1f5f9 0%, #e2e8f0 100%);
+            /* Light */
+        }
+
+        .dark .hero-gradient {
+            background: radial-gradient(circle at center, #0F1C3F 0%, #070F1F 100%);
+            /* Dark */
+        }
+
+        .map-container-bg {
+            background: radial-gradient(circle at center, #f8f9fa 0%, #e2e8f0 100%);
+            /* Light */
+        }
+
+        .dark .map-container-bg {
+            background: radial-gradient(circle at center, #1a2332 0%, #060e1d 100%);
+            /* Dark */
+        }
+
+        .star-grid {
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .glow-button {
+            box-shadow: 0 0 20px rgba(45, 106, 79, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .glow-button:hover {
+            box-shadow: 0 0 30px rgba(212, 163, 115, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .country-hover:hover {
+            fill: #D4A373;
+            filter: drop-shadow(0 0 8px rgba(212, 163, 115, 0.6));
+            cursor: pointer;
+        }
+
+        .highlighted {
+            fill: #D4A373;
+            filter: drop-shadow(0 0 10px rgba(212, 163, 115, 0.8));
+        }
+
+        .dimmed {
+            fill: rgba(255, 255, 255, 0.05) !important;
+            stroke: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            background: #060e1d;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #D4A373;
+            font-family: monospace;
+            font-size: 1.2rem;
+            transition: opacity 0.5s;
+        }
+
+        /* Hide scrollbar for side panel */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        /* Map Layout Control */
+        #world-map {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-100 selection:bg-accent/30 overflow-x-hidden transition-colors duration-300">
+
+    <div id="loading" class="loading-screen">
+        Initializing World Data...
+    </div>
+
+    <!-- MAIN PAGE CONTAINER -->
+    <div class="relative min-h-screen flex flex-col w-full">
+
+        <!-- HEADER -->
+        <header class="fixed top-0 left-0 right-0 z-50 flex justify-center p-4 transition-all duration-300"
+            id="main-header">
+            <nav class="glass flex items-center justify-between w-full max-w-6xl px-6 py-3 rounded-full shadow-lg">
+                <a href="index.html" class="flex items-center gap-2 group cursor-pointer">
+                    <div class="bg-accent p-1.5 rounded-lg text-white">
+                        <span class="material-symbols-outlined text-xl block">public</span>
+                    </div>
+                    <h2 class="text-slate-800 dark:text-slate-100 text-lg font-bold tracking-tight">World Explorer</h2>
+                </a>
+
+                <div class="flex items-center gap-4">
+                    <button onclick="window.toggleTheme()"
+                        class="w-10 h-10 rounded-full flex items-center justify-center bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors shadow-lg">
+                        <span class="material-symbols-outlined text-sm theme-toggle-icon">light_mode</span>
+                    </button>
+                    <div class="relative hidden sm:block">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-400 text-sm">search</span>
+                        <input id="country-search"
+                            class="w-48 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-full py-2 pl-9 pr-4 text-xs focus:ring-1 focus:ring-accent focus:w-64 transition-all placeholder:text-slate-500 text-slate-800 dark:text-white"
+                            placeholder="Search countries..." type="text" autocomplete="off" />
+                        <!-- Search Suggestions -->
+                        <div id="search-suggestions"
+                            class="absolute top-12 left-0 w-full bg-white dark:bg-[#121720] border border-black/10 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden hidden z-50">
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+
+
+        <!-- MAP INTERFACE SECTION -->
+        <section id="map-section"
+            class="relative h-screen w-full flex-none map-container-bg overflow-hidden flex flex-col border-t border-black/5 dark:border-white/5 scroll-snap-align-start transition-colors duration-300">
+
+            <!-- Contextual Header (Map Search / Tools) -->
+            <div class="z-40 w-full flex items-center justify-between px-8 py-4 pointer-events-none">
+                <div class="flex-1 pointer-events-auto max-w-md">
+                    <!-- Second search input for map context if needed, currently reusing top one -->
+                </div>
+            </div>
+
+            <!-- MAPLIBRE CONTAINER -->
+            <div class="absolute inset-0 w-full h-full z-0" id="world-map"></div>
+
+            <!-- Tooltip -->
+            <div id="map-tooltip"
+                class="absolute pointer-events-none hidden z-50 px-3 py-1.5 bg-white/90 dark:bg-background-dark/90 text-slate-800 dark:text-white backdrop-blur border border-black/10 dark:border-white/10 rounded-lg shadow-xl text-sm font-semibold transition-opacity">
+            </div>
+
+            <!-- Bottom Filter Bar -->
+            <div
+                class="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-white/80 dark:bg-primary/80 backdrop-blur-xl rounded-2xl border border-black/10 dark:border-white/10 shadow-2xl z-40 transition-colors duration-300">
+                <button
+                    class="filter-btn active px-4 sm:px-5 py-2 rounded-xl bg-accent text-white text-xs sm:text-sm font-semibold shadow-lg shadow-accent/20 transition-colors"
+                    data-continent="all">All</button>
+                <button
+                    class="filter-btn px-4 sm:px-5 py-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-medium transition-colors"
+                    data-continent="Africa">Africa</button>
+                <button
+                    class="filter-btn hidden sm:block px-4 sm:px-5 py-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-medium transition-colors"
+                    data-continent="Americas">Americas</button>
+                <button
+                    class="filter-btn px-4 sm:px-5 py-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-medium transition-colors"
+                    data-continent="Asia">Asia</button>
+                <button
+                    class="filter-btn px-4 sm:px-5 py-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-medium transition-colors"
+                    data-continent="Europe">Europe</button>
+            </div>
+
+            <!-- Absolute Global Snapshot Left Widget -->
+            <div
+                class="hidden lg:block absolute left-8 top-1/2 -translate-y-1/2 max-w-xs p-6 glass-panel rounded-2xl border border-black/10 dark:border-white/10 z-30 pointer-events-none transition-colors duration-300">
+                <h4 class="text-sm font-bold text-slate-800 dark:text-white mb-4">Global Snapshot</h4>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p class="text-[10px] uppercase text-slate-500 dark:text-slate-400">Total Population</p>
+                            <p class="text-xl font-bold font-mono text-slate-800 dark:text-slate-100">8.05 Billion</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p class="text-[10px] uppercase text-slate-500 dark:text-slate-400">Recognized Nations</p>
+                            <p class="text-xl font-bold font-mono text-slate-800 dark:text-slate-100">195</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STITCH SIDE PANEL / COUNTRY PROFILE -->
+            <!-- Translated off-screen initially via translate-x-full -->
+            <div id="info-panel"
+                class="absolute right-0 top-0 bottom-0 w-full sm:w-96 glass-panel z-50 p-6 flex flex-col transform translate-x-full transition-all duration-500 shadow-[-20px_0_50px_rgba(0,0,0,0.1)] dark:shadow-[-20px_0_50px_rgba(0,0,0,0.5)]">
+
+                <div class="flex items-center justify-between mb-6 shrink-0">
+                    <button onclick="closePanel()"
+                        class="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg transition-colors text-slate-800 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </button>
+                    <span class="text-xs font-bold uppercase tracking-widest text-accent"
+                        id="panel-continent">Continent</span>
+                </div>
+
+                <div class="flex flex-col gap-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+
+                    <!-- Top Flag Card -->
+                    <div class="relative group shrink-0">
+                        <div
+                            class="w-full aspect-[4/3] rounded-xl bg-slate-200 dark:bg-slate-800 overflow-hidden shadow-2xl relative border border-black/10 dark:border-white/10">
+                            <img id="panel-flag" alt="Flag" class="w-full h-full object-cover" src="" />
+                            <div
+                                class="absolute inset-0 bg-gradient-to-t from-white/95 via-white/40 to-transparent dark:from-primary/95 dark:via-primary/40 dark:to-transparent">
+                            </div>
+
+                            <div class="absolute bottom-4 left-4 right-4 flex flex-col gap-1">
+                                <h1 id="panel-name"
+                                    class="text-2xl font-bold text-slate-900 dark:text-white leading-tight break-words">
+                                    Country Name</h1>
+                                <p class="text-slate-700 dark:text-slate-300 text-sm flex items-center gap-1"><span
+                                        class="material-symbols-outlined text-[16px]">location_city</span> <span
+                                        id="panel-capital">Capital</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-2 gap-3 shrink-0">
+                        <div
+                            class="p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+                            <p class="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                                Population</p>
+                            <p class="text-lg font-bold text-slate-900 dark:text-slate-100 font-mono" id="stat-pop-val">
+                                ...</p>
+                        </div>
+                        <div
+                            class="p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+                            <p class="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Area
+                                (km²)</p>
+                            <p class="text-lg font-bold text-slate-900 dark:text-slate-100 font-mono"
+                                id="stat-area-val">...</p>
+                        </div>
+                        <div
+                            class="p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+                            <p class="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                                Currency</p>
+                            <p class="text-sm font-bold text-slate-900 dark:text-slate-100 truncate"
+                                id="panel-currency">...</p>
+                        </div>
+                        <div
+                            class="p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+                            <p class="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                                Languages</p>
+                            <p class="text-sm font-bold text-slate-900 dark:text-slate-100 truncate"
+                                id="panel-languages">...</p>
+                        </div>
+                    </div>
+
+                    <!-- Visual Bars -->
+                    <div class="space-y-4 shrink-0 pb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Global Metrics</h3>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px] text-slate-600 dark:text-slate-300 mb-1">
+                                    <span>Population Density</span>
+                                </div>
+                                <div class="h-1.5 w-full bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                                    <div id="bar-pop"
+                                        class="h-full bg-accent rounded-full transition-all duration-1000 ease-out"
+                                        style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px] text-slate-600 dark:text-slate-300 mb-1">
+                                    <span>Land Mass Scale</span>
+                                </div>
+                                <div class="h-1.5 w-full bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                                    <div id="bar-area"
+                                        class="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
+                                        style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px] text-slate-600 dark:text-slate-300 mb-1">
+                                    <span>Dev Index</span>
+                                    <span id="stat-dev-val" class="font-bold text-slate-800 dark:text-white">...</span>
+                                </div>
+                                <div class="h-1.5 w-full bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                                    <div id="bar-dev"
+                                        class="h-full bg-purple-500 rounded-full transition-all duration-1000 ease-out"
+                                        style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-6 border-t border-black/10 dark:border-white/10 shrink-0">
+                    <a id="explore-more-btn" href="#"
+                        class="w-full py-3.5 bg-accent hover:bg-accent/90 text-white font-bold rounded-xl shadow-[0_0_15px_rgba(59,130,246,0.5)] flex items-center justify-center gap-2 transition-all active:scale-95">
+                        Deep Dive
+                        <span class="material-symbols-outlined">travel_explore</span>
+                    </a>
+                    <a id="maps-link" href="#" target="_blank"
+                        class="w-full mt-3 py-2.5 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 border border-black/10 dark:border-white/10 text-slate-800 dark:text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all">
+                        <span class="material-symbols-outlined text-sm">map</span>
+                        Google Maps
+                    </a>
+                </div>
+            </div>
+
+            <!-- Panel Overlay (for mobile to close the panel when clicking outside) -->
+            <div id="panel-overlay" onclick="closePanel()"
+                class="absolute inset-0 bg-black/50 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-500">
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- Custom JS -->
+    <script src="js/tts.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/map.js"></script>
+    <script>
+        // Adjust elements strictly related to HTML layout transitions
+
+
+        // Hide overlay smoothly
+        function toggleOverlay(show) {
+            const overlay = document.getElementById('panel-overlay');
+            if (show) {
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.style.opacity = '1', 10);
+            } else {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.classList.add('hidden'), 500);
+            }
+        }
+    </script>
+</body>
+
+</html>
