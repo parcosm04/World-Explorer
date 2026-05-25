@@ -173,14 +173,6 @@ async function getWikipediaSummary(country) {
 // NEW: Specific Localized Data Mapping via Wikipedia API
 // ---------------------------------------------------------
 const SPECIFIC_DATA = {
-    "India": {
-        places: ["Taj_Mahal", "Varanasi", "Jaipur", "Gateway_of_India", "Hampi", "Red_Fort"],
-        cuisine: ["Butter_chicken", "Biryani", "Masala_dosa", "Samosa", "Palak_paneer", "Rogan_josh"],
-        flora: ["Nelumbo_nucifera", "Ficus_benghalensis", "Azadirachta_indica", "Ficus_religiosa", "Tagetes", "Rhododendron"],
-        fauna: ["Bengal_tiger", "Indian_elephant", "Indian_peafowl", "Indian_rhinoceros", "Snow_leopard", "King_cobra"],
-        culture: ["Diwali", "Holi", "Pushkar_Camel_Fair", "Ganges", "Kathakali", "Durga_Puja"],
-        landmarks: ["Golden_Temple", "Meenakshi_Temple", "Victoria_Memorial", "Ajanta_Caves", "Ellora_Caves", "Khajuraho_Group_of_Monuments"]
-    },
     "Japan": {
         places: ["Mount_Fuji", "Kyoto", "Fushimi_Inari-taisha", "Arashiyama", "Shibuya_Crossing", "Itsukushima_Shrine"],
         cuisine: ["Sushi", "Ramen", "Sashimi", "Tempura", "Takoyaki", "Udon"],
@@ -199,7 +191,7 @@ const SPECIFIC_DATA = {
     }
 };
 
-async function fetchWikiItems(items) {
+async function fetchWikiItems(items, bypassProxy = false) {
     if (!items || items.length === 0) return [];
     const promises = items.map(async (item) => {
         try {
@@ -211,7 +203,7 @@ async function fetchWikiItems(items) {
                 // Upscale thumbnail to 800px
                 const rawUrl = res.data.thumbnail.source.replace(/\d+px-/, '800px-');
                 // Route through our proxy so the browser gets a same-origin request
-                const proxiedUrl = `http://localhost:${PORT}/proxy/image?url=${encodeURIComponent(rawUrl)}`;
+                const proxiedUrl = bypassProxy ? rawUrl : `/proxy/image?url=${encodeURIComponent(rawUrl)}`;
                 return {
                     title: res.data.title || res.data.displaytitle || item.replace(/_/g, ' '),
                     description: res.data.extract || "A famous specific feature of this country.",
@@ -276,14 +268,15 @@ app.get('/api/country/:country', async (req, res) => {
         const mappedSpec = SPECIFIC_DATA[cname];
 
         if (mappedSpec) {
+            const bypassProxy = cname === 'India';
             // First fetch specifically localized mappings from Wiki
             [places, cuisine, flora, fauna, culture, landmarks] = await Promise.all([
-                fetchWikiItems(mappedSpec.places),
-                fetchWikiItems(mappedSpec.cuisine),
-                fetchWikiItems(mappedSpec.flora),
-                fetchWikiItems(mappedSpec.fauna),
-                fetchWikiItems(mappedSpec.culture),
-                fetchWikiItems(mappedSpec.landmarks)
+                fetchWikiItems(mappedSpec.places, bypassProxy),
+                fetchWikiItems(mappedSpec.cuisine, bypassProxy),
+                fetchWikiItems(mappedSpec.flora, bypassProxy),
+                fetchWikiItems(mappedSpec.fauna, bypassProxy),
+                fetchWikiItems(mappedSpec.culture, bypassProxy),
+                fetchWikiItems(mappedSpec.landmarks, bypassProxy)
             ]);
 
             // If some fail, fallback cleanly to Unsplash for missing buckets

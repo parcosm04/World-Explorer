@@ -45,7 +45,7 @@ const DataAPI = {
         if (cached) return cached;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/country/${encodeURIComponent(countryName)}`);
+            const response = await fetch(`/api/country/${encodeURIComponent(countryName)}`);
             if (!response.ok) throw new Error('Failed to fetch aggregated country data from backend');
             const data = await response.json();
 
