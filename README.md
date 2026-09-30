@@ -1,86 +1,175 @@
-# 🌍 World Explorer
+<div align="center">
 
-A stunning, interactive web application that allows users to explore countries around the globe. Featuring a beautifully crafted, Apple-inspired monochromatic UI with glassmorphism effects, World Explorer provides deep insights into every country—ranging from economic metrics to air quality, Wikipedia summaries, and high-quality photography.
+🌍 World Explorer
 
-## ✨ Features
+Explore the World. Understand the Data. Experience the Globe.
 
-- **Interactive 3D Globe & Map**: Seamlessly navigate the world with custom map integrations and a responsive 3D globe.
-- **Comprehensive Country Data**: Automatically aggregates and caches real-time data on:
-  - Economy (GDP, Development Index, Population Growth from World Bank API)
-  - Environment & Air Quality (OpenAQ API)
-  - General Info (REST Countries API & Wikipedia Summaries)
-- **Stunning Imagery**: Intelligent, context-aware image fetching using the Unsplash API and Wikipedia Commons (with a built-in image proxy to bypass hotlink restrictions).
-- **Text-to-Speech (TTS)**: Listen to country descriptions with built-in TTS capabilities.
-- **Premium UI/UX**: 
-  - Apple-style monochromatic light palette
-  - Fluid typography scaling across all devices
-  - Glassmorphism UI panels and smooth micro-animations
-  - Fully responsive CSS Grid and Flexbox layouts
-- **Performance Optimized**: Built-in backend caching (`node-cache`) to ensure fast load times and minimize external API calls.
+World Explorer is a full-stack geospatial exploration platform combining an interactive 3D globe, 2D maps, country data, environmental information, economic indicators, imagery, and text-to-speech.
 
-## 🛠️ Technology Stack
+Built with HTML, CSS, JavaScript, Node.js and Express, the project integrates multiple public APIs and presents the data through a responsive, glassmorphism-inspired interface.
 
-- **Frontend**: HTML5, CSS3 (Vanilla), JavaScript
-- **Backend**: Node.js, Express.js
-- **Dependencies**: 
-  - `axios` for robust API fetching
-  - `cors` for cross-origin requests
-  - `dotenv` for environment variable management
-  - `node-cache` for efficient caching
+<br>
 
-## 🚀 Getting Started
+<a href="https://github.com/parcosm04/World-Explorer">
+<img src="https://img.shields.io/badge/GITHUB-111827?style=for-the-badge&logo=github&logoColor=white"/>
+</a>
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) installed on your machine.
-- An [Unsplash Developer API Key](https://unsplash.com/developers).
+</div>
 
-### Installation
+<h2 align="center">✨ Core Features</h2>
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/parcosm04/World-Explorer.git
-   cd World-Explorer
-   ```
+<div align="center">
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+Feature
 
-3. **Configure Environment Variables:**
-   Create a `.env` file in the root directory and add your Unsplash Access Key:
-   ```env
-   UNSPLASH_ACCESS_KEY=your_unsplash_access_key_here
-   ```
+Implementation
 
-4. **Start the local server:**
-   ```bash
-   node server.js
-   ```
+🌐 3D Globe
 
-5. **Open the app:**
-   Open your browser and navigate to `http://localhost:3000`.
+Interactive globe-based country exploration
 
-## 📂 Project Structure
+🗺️ 2D Map
 
-```text
-World-Explorer/
-├── css/
-│   ├── style.css       # Core design system and layout
-│   └── country.css     # Styling for individual country pages
-├── js/
-│   ├── api.js          # Handles fetching data from the backend
-│   ├── map.js          # Interactive map logic
-│   ├── country.js      # Populates country data dynamically
-│   ├── tts.js          # Text-to-speech functionality
-│   ├── theme.js        # UI theme controls
-│   └── particles.json  # Particle animation config
-├── index.html          # Homepage / Main Globe View
-├── country.html        # Detailed Country View page
-├── map.html            # 2D Map Explorer
-├── server.js           # Express Backend with API aggregation & caching
-└── world.svg           # Scalable Vector Graphics map asset
-```
+Interactive geographic navigation
 
-## 📜 License
-This project is open-source and available under the ISC License.
+📊 Country Data
+
+Population, GDP, development and geographic information
+
+🌫️ Environmental Data
+
+Air-quality information through OpenAQ
+
+🖼️ Dynamic Imagery
+
+Unsplash + Wikimedia Commons
+
+🔊 Text-to-Speech
+
+Browser-based country narration
+
+⚡ API Caching
+
+node-cache through Express backend
+
+</div>
+
+<h2 align="center">🧠 How It Works</h2>
+
+<div align="center">
+
+     REST Countries       World Bank          OpenAQ
+           │                  │                 │
+           └──────────────────┼─────────────────┘
+                              ▼
+                    ┌─────────────────┐
+                    │ Express + Node  │
+                    └────────┬────────┘
+                             │
+                       ┌─────▼─────┐
+                       │ node-cache│
+                       └─────┬─────┘
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │ Interactive UI  │
+                    └───────┬─────────┘
+                            │
+                 ┌──────────┼──────────┐
+                 ▼          ▼          ▼
+              3D Globe    2D Map   Country View
+
+</div>
+
+<h2 align="center">🛠️ Technology Stack</h2>
+
+<h3 align="center">Frontend</h3>
+
+<div align="center">
+
+<img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white"/>
+<img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white"/>
+<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black"/>
+
+<br>
+
+CSS Grid · Flexbox · Responsive UI · Glassmorphism
+
+</div>
+
+<h3 align="center">Backend</h3>
+
+<div align="center">
+
+<img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white"/>
+<img src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white"/>
+<img src="https://img.shields.io/badge/node--cache-222222?style=for-the-badge"/>
+
+</div>
+
+<h3 align="center">APIs & Services</h3>
+
+<div align="center">
+
+<img src="https://img.shields.io/badge/REST_Countries-FF4D6D?style=for-the-badge"/>
+<img src="https://img.shields.io/badge/World_Bank-222222?style=for-the-badge"/>
+<img src="https://img.shields.io/badge/OpenAQ-7C3AED?style=for-the-badge"/>
+<img src="https://img.shields.io/badge/Unsplash-111111?style=for-the-badge&logo=unsplash&logoColor=white"/>
+<img src="https://img.shields.io/badge/Wikimedia-636466?style=for-the-badge&logo=wikimedia-commons&logoColor=white"/>
+
+</div>
+
+<h2 align="center">🔬 Engineering Focus</h2>
+
+<div align="center">
+
+API Integration · Data Aggregation · Backend Caching · Geospatial UI · Responsive Design · Frontend/Backend Architecture
+
+</div>
+
+<h2 align="center">🚀 Getting Started</h2>
+
+1. Clone
+
+git clone https://github.com/parcosm04/World-Explorer.git
+cd World-Explorer
+
+2. Install
+
+npm install
+
+3. Configure
+
+Create .env:
+
+UNSPLASH_ACCESS_KEY=your_unsplash_access_key_here
+
+4. Run
+
+node server.js
+
+Open:
+
+http://localhost:3000
+
+<h2 align="center">🔮 Future Work</h2>
+
+<div align="center">
+
+Historical Data · Statistical Charts · Advanced Map Layers · Country Comparison · More Environmental Datasets · PWA Support
+
+</div>
+
+<div align="center">
+
+🌍 Explore. Analyze. Discover.
+
+World Explorer
+
+Built with curiosity, APIs, and a lot of JavaScript.
+
+<br>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:00E5FF,50:7C3AED,100:FF4D6D&height=100&section=footer"/>
+
+</div>
